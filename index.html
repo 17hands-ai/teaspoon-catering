@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teaspoon Holiday Catering</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#B3121F; --red-dark:#8A0D17; --red-soft:#FBE9E7;
+    --gold:#C9A24A; --gold-soft:#F6ECD3;
+    --green:#1F4D3A; --cream:#FFF8F0; --ink:#2B1E1A; --muted:#7A6A62;
+    --line:#EADBC8; --white:#fff;
+    --radius:16px; --shadow:0 6px 20px rgba(139,13,23,.10);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:var(--cream);
+       background-image:radial-gradient(circle at 10% 0%,#FDEFE3 0,transparent 40%),radial-gradient(circle at 90% 10%,#F8E6E2 0,transparent 35%);
+       min-height:100vh;padding-bottom:110px}
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px}
+
+  /* Header */
+  header{text-align:center;padding:28px 16px 8px;position:relative}
+  .brand{display:inline-flex;align-items:center;gap:8px;font-weight:800;letter-spacing:.32em;font-size:15px;color:var(--ink)}
+  .brand sup{font-size:9px;letter-spacing:0}
+  h1{font-family:'Playfair Display',serif;font-weight:900;color:var(--red);font-size:clamp(40px,11vw,60px);line-height:1;margin:10px 0 4px;letter-spacing:.02em;
+     text-shadow:0 2px 0 var(--gold-soft)}
+  .sub{font-family:'Playfair Display',serif;font-style:italic;color:var(--gold);font-size:20px;margin:0}
+  .flakes{position:absolute;inset:0;pointer-events:none;opacity:.5}
+
+  /* Progress */
+  .progress{display:flex;gap:6px;margin:20px 0 6px}
+  .progress span{flex:1;height:6px;border-radius:6px;background:var(--line);transition:background .3s}
+  .progress span.on{background:var(--red)}
+  .step-label{font-size:13px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+
+  h2{font-family:'Playfair Display',serif;color:var(--ink);font-size:26px;margin:4px 0 6px}
+  .hint{color:var(--muted);margin:0 0 18px;font-size:15px}
+
+  .step{display:none;animation:fade .3s ease}
+  .step.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* Package cards */
+  .pkgs{display:grid;gap:14px}
+  .pkg{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;background:var(--white);border:2px solid var(--line);
+       border-radius:var(--radius);padding:12px;cursor:pointer;text-align:left;font:inherit;color:inherit;box-shadow:var(--shadow);transition:.2s;position:relative}
+  .pkg:hover{border-color:var(--gold)}
+  .pkg.sel{border-color:var(--red);background:linear-gradient(0deg,#fff,#FFF5F3)}
+  .pkg.sel::after{content:"✓";position:absolute;top:10px;right:12px;width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;
+       display:grid;place-items:center;font-weight:800;font-size:14px}
+  .pkg .art{border-radius:12px;overflow:hidden;aspect-ratio:10/7;background:var(--gold-soft)}
+  .pkg .art svg,.pkg .art img{width:100%;height:100%;display:block;object-fit:cover}
+  .num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;font-weight:800;margin-right:6px}
+  .pkg h3{margin:0;font-size:17px;display:flex;align-items:center}
+  .pkg .tag{font-family:'Playfair Display',serif;font-style:italic;color:var(--gold);font-size:14px;margin:2px 0}
+  .pkg .price{font-family:'Playfair Display',serif;font-weight:900;color:var(--red);font-size:28px;line-height:1.1}
+  .pkg p{margin:2px 0 0;font-size:13.5px;color:var(--muted)}
+  .pkg.custom{grid-template-columns:1fr;text-align:center;padding:16px;box-shadow:none;border-style:dashed}
+  .pkg.custom h3{justify-content:center}
+
+  /* Fields */
+  .card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+  .card h4{margin:0 0 4px;font-size:16px}
+  .card .note{font-size:13px;color:var(--muted);margin:0 0 12px}
+  label.f{display:block;font-weight:700;font-size:14px;margin:14px 0 6px}
+  label.f:first-child{margin-top:0}
+  .opt{font-weight:400;color:var(--muted)}
+  input[type=text],input[type=tel],input[type=email],input[type=date],input[type=time],input[type=number],select,textarea{
+     width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#FFFCF8;color:var(--ink);outline:none;transition:border .2s}
+  input:focus,select:focus,textarea:focus{border-color:var(--gold);background:#fff}
+  textarea{min-height:90px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row > div > label.f{margin-top:14px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{border:1.5px solid var(--line);background:#FFFCF8;border-radius:999px;padding:9px 14px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink);transition:.15s}
+  .chip:hover{border-color:var(--gold)}
+  .chip.on{background:var(--red);border-color:var(--red);color:#fff}
+  .chip .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+
+  .stepper{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .stepper:last-child{border-bottom:0}
+  .stepper .lbl{font-weight:700;font-size:15px}
+  .stepper .lbl small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+  .ctrl{display:flex;align-items:center;gap:6px}
+  .ctrl button{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-size:20px;font-weight:700;color:var(--red);cursor:pointer;line-height:1}
+  .ctrl button:hover{border-color:var(--red)}
+  .ctrl output{min-width:34px;text-align:center;font-weight:800;font-size:17px}
+  .tally{font-size:13px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--gold-soft);color:#7a5c12;display:inline-block;margin-bottom:6px}
+  .tally.ok{background:#E3F1E8;color:var(--green)}
+  .toggle{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;margin:10px 0 4px;cursor:pointer}
+  .toggle input{width:20px;height:20px;accent-color:var(--red)}
+
+  /* Review */
+  .sum{width:100%;border-collapse:collapse;font-size:14.5px}
+  .sum td{padding:9px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  .sum td:first-child{color:var(--muted);width:38%;padding-right:10px}
+  .sum td:last-child{font-weight:700;white-space:pre-line}
+  .total-box{display:flex;justify-content:space-between;align-items:baseline;background:var(--red);color:#fff;border-radius:var(--radius);padding:16px 18px;margin:16px 0}
+  .total-box b{font-family:'Playfair Display',serif;font-size:32px}
+  .ack{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.45;cursor:pointer}
+  .ack input{width:22px;height:22px;flex:none;margin-top:1px;accent-color:var(--red)}
+
+  /* Footer bar */
+  .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);
+       box-shadow:0 -6px 20px rgba(0,0,0,.06);z-index:10}
+  .bar .wrap{display:flex;align-items:center;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+  .est{flex:1;min-width:0}
+  .est small{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+  .est span{font-family:'Playfair Display',serif;font-weight:900;font-size:24px;color:var(--red)}
+  .btn{font:inherit;font-weight:800;font-size:16px;border-radius:999px;padding:13px 22px;cursor:pointer;border:2px solid var(--red);transition:.15s}
+  .btn.primary{background:var(--red);color:#fff}
+  .btn.primary:hover{background:var(--red-dark);border-color:var(--red-dark)}
+  .btn.ghost{background:#fff;color:var(--red)}
+  .btn:disabled{opacity:.55;cursor:wait}
+  .err{color:var(--red);font-weight:700;font-size:14px;background:var(--red-soft);border-radius:12px;padding:10px 14px;margin:0 0 14px;display:none}
+  .err.show{display:block}
+  .bad{border-color:var(--red)!important}
+
+  /* Done */
+  .done{text-align:center;padding:30px 10px}
+  .done .badge{width:84px;height:84px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-size:40px;margin:0 auto 16px;box-shadow:0 0 0 8px var(--gold-soft)}
+  .done h2{font-size:30px}
+  .contact-line{font-size:14px;color:var(--muted);text-align:center;margin:26px 0 0}
+  .contact-line a{color:var(--red);font-weight:800;text-decoration:none}
+  .preview-flag{background:var(--green);color:#fff;text-align:center;font-size:12.5px;font-weight:700;padding:6px 10px}
+
+  @media (max-width:430px){
+    .pkg{grid-template-columns:96px 1fr;gap:12px}
+    .pkg .price{font-size:24px}
+    .row{grid-template-columns:1fr;gap:0}
+    .btn{padding:12px 18px}
+  }
+</style>
+</head>
+<body>
+<div class="preview-flag" id="previewFlag" hidden>Preview mode — requests aren't saved until this page is deployed in Google Apps Script.</div>
+
+<header>
+  <svg class="flakes" viewBox="0 0 640 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g fill="none" stroke="#C9A24A" stroke-width="1.6" stroke-linecap="round">
+      <g transform="translate(60 50)"><path d="M0-14V14M-12-7 12 7M-12 7 12-7"/></g>
+      <g transform="translate(580 70) scale(.8)"><path d="M0-14V14M-12-7 12 7M-12 7 12-7"/></g>
+      <g transform="translate(110 150) scale(.6)"><path d="M0-14V14M-12-7 12 7M-12 7 12-7"/></g>
+      <g transform="translate(530 160) scale(.55)"><path d="M0-14V14M-12-7 12 7M-12 7 12-7"/></g>
+    </g>
+  </svg>
+  <div class="brand">
+    TEASPOON<sup>®</sup>
+  </div>
+  <svg width="120" height="18" viewBox="0 0 120 18" aria-hidden="true" style="display:block;margin:6px auto 0">
+    <ellipse cx="18" cy="9" rx="13" ry="7" fill="#C9A24A"/><rect x="28" y="7.5" width="80" height="3" rx="1.5" fill="#C9A24A"/>
+    <circle cx="111" cy="9" r="3.5" fill="none" stroke="#C9A24A" stroke-width="2"/>
+  </svg>
+  <h1>HOLIDAY</h1>
+  <p class="sub">Catering Request</p>
+</header>
+
+<main class="wrap">
+  <div class="progress" id="progress"></div>
+  <div class="step-label" id="stepLabel"></div>
+  <div class="err" id="err" role="alert"></div>
+
+  <!-- STEP 1: Package -->
+  <section class="step" data-step="package">
+    <h2>Pick your package</h2>
+    <p class="hint">Tap the one you're leaning toward. You can ask about the others at the end.</p>
+    <div class="pkgs" id="pkgs"></div>
+  </section>
+
+  <!-- STEP 2: Details -->
+  <section class="step" data-step="details">
+    <div id="det-onsite" hidden>
+      <h2>On-Site Catering</h2>
+      <p class="hint">Fresh drinks made on-site by the Teaspoon Social team.</p>
+      <div class="card">
+        <h4>Choose 2 classic flavors</h4>
+        <p class="note">Pick exactly two.</p>
+        <div class="chips" id="onsiteFlavors"></div>
+      </div>
+      <div class="card">
+        <h4>Add-ons</h4>
+        <p class="note">50 drinks and 2 hours are included.</p>
+        <div id="onsiteAddons"></div>
+      </div>
+      <div class="card">
+        <h4>21+ bar service</h4>
+        <p class="note">Available on request — alcohol is provided by the event host.</p>
+        <div class="chips" id="barChips"></div>
+      </div>
+      <div class="card">
+        <label class="f" for="setupNotes">Setup notes <span class="opt">(optional)</span></label>
+        <textarea id="setupNotes" placeholder="Power outlet nearby? Table space? Parking or loading access? Stairs?"></textarea>
+      </div>
+    </div>
+
+    <div id="det-holiday" hidden>
+      <h2>Holiday Special</h2>
+      <p class="hint">Each bundle: 10 pre-sealed drinks + 1 free Classic Party Pour (59 oz).</p>
+      <div class="card"><div id="holidayBundles"></div></div>
+      <div class="card">
+        <h4>Your free Party Pour flavor</h4>
+        <p class="note">One per bundle.</p>
+        <div class="chips" id="partyPour"></div>
+      </div>
+      <div class="card">
+        <h4>Pre-sealed drink mix</h4>
+        <span class="tally" id="holidayTally"></span>
+        <label class="toggle"><input type="checkbox" id="holidaySurprise"> Surprise me with a mix</label>
+        <div id="holidayMix"></div>
+      </div>
+      <div class="card">
+        <h4>Topping</h4>
+        <p class="note">Each pre-sealed drink includes 1 topping.</p>
+        <div class="chips" id="holidayTopping"></div>
+      </div>
+    </div>
+
+    <div id="det-combo" hidden>
+      <h2>Snack &amp; Drink Combo</h2>
+      <p class="hint">Each combo: 20 musubi + 20 pre-sealed drinks.</p>
+      <div class="card"><div id="comboCount"></div></div>
+      <div class="card">
+        <h4>Musubi mix</h4>
+        <span class="tally" id="musubiTally"></span>
+        <div id="musubiMix"></div>
+      </div>
+      <div class="card">
+        <h4>Pre-sealed drink mix</h4>
+        <span class="tally" id="comboTally"></span>
+        <label class="toggle"><input type="checkbox" id="comboSurprise"> Surprise me with a mix</label>
+        <div id="comboMix"></div>
+      </div>
+      <div class="card">
+        <h4>Topping</h4>
+        <div class="chips" id="comboTopping"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3: Event -->
+  <section class="step" data-step="event">
+    <h2>Your event</h2>
+    <p class="hint">When and where should we bring the holiday cheer?</p>
+    <div class="card">
+      <label class="f" for="eventType">Type of event</label>
+      <select id="eventType">
+        <option value="">Choose one…</option>
+        <option>Holiday party</option><option>Office / corporate event</option><option>Birthday</option>
+        <option>School or church event</option><option>Wedding / shower</option><option>Family gathering</option><option>Other</option>
+      </select>
+      <div class="row">
+        <div><label class="f" for="eventDate">Date</label><input type="date" id="eventDate"></div>
+        <div><label class="f" for="eventTime" id="timeLabel">Start time</label><input type="time" id="eventTime"></div>
+      </div>
+      <label class="f" for="guests">Estimated number of guests</label>
+      <input type="number" id="guests" min="1" inputmode="numeric" placeholder="e.g. 40">
+    </div>
+    <div class="card">
+      <div id="serviceWrap">
+        <label class="f">Pickup or delivery?</label>
+        <div class="chips" id="serviceChips"></div>
+      </div>
+      <div id="addrWrap">
+        <label class="f" for="venue">Venue name <span class="opt">(optional)</span></label>
+        <input type="text" id="venue" placeholder="e.g. Oak Hall, Acme Inc. office">
+        <label class="f" for="address">Event address</label>
+        <input type="text" id="address" placeholder="Street, city, ZIP" autocomplete="street-address">
+        <label class="f">Indoor or outdoor?</label>
+        <div class="chips" id="settingChips"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 4: Contact -->
+  <section class="step" data-step="contact">
+    <h2>About you</h2>
+    <p class="hint">So Samantha can confirm your order.</p>
+    <div class="card">
+      <label class="f" for="name">Full name</label>
+      <input type="text" id="name" autocomplete="name">
+      <div class="row">
+        <div><label class="f" for="phone">Mobile phone</label><input type="tel" id="phone" autocomplete="tel" placeholder="(408) 555-0123"></div>
+        <div><label class="f" for="email">Email</label><input type="email" id="email" autocomplete="email"></div>
+      </div>
+      <label class="f">Best way to reach you</label>
+      <div class="chips" id="contactChips"></div>
+      <label class="f" for="company">Company or organization <span class="opt">(optional)</span></label>
+      <input type="text" id="company" autocomplete="organization">
+    </div>
+    <div class="card">
+      <label class="f">Dietary needs or allergies <span class="opt">(optional)</span></label>
+      <div class="chips" id="dietChips"></div>
+      <label class="f">Also want a quote on… <span class="opt">(optional)</span></label>
+      <div class="chips" id="quoteChips"></div>
+      <label class="f">Approximate budget <span class="opt">(optional)</span></label>
+      <div class="chips" id="budgetChips"></div>
+      <label class="f">How did you hear about us? <span class="opt">(optional)</span></label>
+      <div class="chips" id="heardChips"></div>
+      <label class="f" for="notes">Questions or special requests <span class="opt">(optional)</span></label>
+      <textarea id="notes" placeholder="Custom flavors, a theme, timing details, anything else…"></textarea>
+    </div>
+  </section>
+
+  <!-- STEP 5: Review -->
+  <section class="step" data-step="review">
+    <h2>Review your request</h2>
+    <p class="hint">Double-check everything, then send it over.</p>
+    <div class="card"><table class="sum" id="summary"></table></div>
+    <div class="total-box"><span>Estimated total</span><b id="reviewTotal"></b></div>
+    <div class="card">
+      <label class="ack"><input type="checkbox" id="ack">
+        <span>I understand this is a <b>request, not a confirmed booking</b>. Teaspoon will contact me to confirm availability, final price and payment.</span></label>
+    </div>
+  </section>
+
+  <!-- DONE -->
+  <section class="step" data-step="done">
+    <div class="done">
+      <div class="badge">✓</div>
+      <h2>Request received!</h2>
+      <p class="hint" id="doneMsg"></p>
+    </div>
+  </section>
+
+  <p class="contact-line">Questions? Text or call <a id="phoneLink" href="#"></a></p>
+</main>
+
+<div class="bar" id="bar">
+  <div class="wrap">
+    <div class="est"><small>Estimated total</small><span id="estTotal">—</span></div>
+    <button class="btn ghost" id="backBtn" type="button">Back</button>
+    <button class="btn primary" id="nextBtn" type="button">Next</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   EDIT HERE — prices, flavors, toppings, photos, contact
+   To use a real photo, paste its URL into "image" (e.g. a
+   Google Drive / Imgur / website link). Leave "" to keep the
+   built-in illustration.
+   ========================================================= */
+const CONFIG = {
+  // Paste your Apps Script Web app URL here when hosting on Vercel/Netlify (ends in /exec).
+  apiUrl: 'https://script.google.com/macros/s/AKfycbzSkwnpmYOHGyTQOKDJIlmi-VbFToS2oTg8Lp2bC8LM5pM9TGZ6UdPMH9e0MidCGFNDFQ/exec',
+  phone: '408-603-9600',
+  ownerName: 'Samantha',
+  flavors: [
+    {name:'Milk Tea',       color:'#C89B6D'},
+    {name:'Thai Tea',       color:'#E8913F'},
+    {name:'Taro',           color:'#B49ACB'},
+    {name:'Creamy Jasmine', color:'#EFE3C2'},
+    {name:'Liquid Gold',    color:'#D9A52B'}
+  ],
+  toppings: ['Boba', 'Lychee Jelly', 'Pudding', 'No topping'],   // ← confirm with Samantha
+  musubi: ['Spam', 'Chicken', 'Vegetarian'],
+  extraDrinkPrice: 6,
+  extraHourPrice: 75,
+  packages: {
+    onsite:  {n:1, name:'On-Site Catering',     price:550, tag:'Teaspoon Social',        blurb:'50 drinks · 2 hours · 2 classic flavors made fresh on-site', image:''},
+    holiday: {n:2, name:'Holiday Special',      price:95,  tag:'Party Pour on us!',       blurb:'10 pre-sealed drinks + 1 free Classic Party Pour (59 oz)',  image:''},
+    combo:   {n:3, name:'Snack & Drink Combo',  price:199, tag:'Chicken & veggie options', blurb:'20 Spam musubi + 20 pre-sealed drinks',                    image:''}
+  }
+};
+
+/* ---------- Illustrations (placeholders until real photos) ---------- */
+const ART = {
+  onsite: `<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="140" fill="#F6ECD3"/>
+    <path d="M0 16 Q50 36 100 16 T200 16" stroke="#1F4D3A" stroke-width="1.5" fill="none"/>
+    <g>${[14,38,62,86,114,138,162,186].map((x,i)=>`<circle cx="${x}" cy="${i%4===0||i%4===3?22:28}" r="4" fill="${['#B3121F','#C9A24A','#1F4D3A','#F2C14E'][i%4]}"/>`).join('')}</g>
+    ${[60,89,118].map((x,i)=>`<g><rect x="${x}" y="44" width="22" height="32" rx="4" fill="#fff" stroke="#C9A24A" stroke-width="1.5"/>
+      <rect x="${x+3}" y="54" width="16" height="19" rx="2" fill="${['#E8913F','#C89B6D','#B49ACB'][i]}"/>
+      <rect x="${x+8}" y="40" width="6" height="5" fill="#2B1E1A"/></g>`).join('')}
+    <rect x="34" y="76" width="132" height="44" rx="6" fill="#fff" stroke="#B3121F" stroke-width="2.5"/>
+    <text x="108" y="101" text-anchor="middle" font-family="Playfair Display, serif" font-style="italic" font-weight="700" font-size="14" fill="#B3121F">Teaspoon Social</text>
+    <circle cx="48" cy="90" r="7" fill="none" stroke="#1F4D3A" stroke-width="3"/><circle cx="48" cy="84" r="2" fill="#B3121F"/>
+    <rect x="40" y="120" width="5" height="14" fill="#2B1E1A"/><rect x="155" y="120" width="5" height="14" fill="#2B1E1A"/>
+  </svg>`,
+  holiday: `<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="140" fill="#FBE9E7"/>
+    <g fill="#fff" opacity=".8"><circle cx="20" cy="20" r="2"/><circle cx="180" cy="30" r="2.5"/><circle cx="170" cy="110" r="2"/><circle cx="25" cy="100" r="2.5"/></g>
+    ${[['#E8913F',44],['#F0B9B0',86],['#B49ACB',128]].map(([c,x])=>`<g>
+      <rect x="${x+8}" y="22" width="12" height="12" rx="2" fill="#2B1E1A"/>
+      <path d="M${x+6} 34 h16 l6 12 v66 a6 6 0 0 1 -6 6 h-16 a6 6 0 0 1 -6 -6 v-66z" fill="${c}"/>
+      <rect x="${x+2}" y="64" width="24" height="26" rx="3" fill="#fff"/>
+      <text x="${x+14}" y="75" text-anchor="middle" font-family="Playfair Display, serif" font-style="italic" font-weight="700" font-size="6.5" fill="#B3121F">Party</text>
+      <text x="${x+14}" y="84" text-anchor="middle" font-family="Playfair Display, serif" font-style="italic" font-weight="700" font-size="6.5" fill="#B3121F">Pour</text>
+    </g>`).join('')}
+    <path d="M150 112 l10 -14 l10 14z" fill="#1F4D3A"/><path d="M152 104 l8 -12 l8 12z" fill="#1F4D3A"/><circle cx="160" cy="90" r="2.5" fill="#C9A24A"/>
+  </svg>`,
+  combo: `<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="140" fill="#F6ECD3"/>
+    ${[['#E8913F',40],['#F2C14E',70],['#B49ACB',100],['#F0B9B0',130],['#C89B6D',160]].map(([c,x])=>`<g>
+      <rect x="${x-9}" y="14" width="18" height="40" rx="3" fill="${c}"/><rect x="${x-10}" y="10" width="20" height="5" rx="2" fill="#fff" stroke="#ddd"/></g>`).join('')}
+    <rect x="18" y="60" width="164" height="70" rx="10" fill="#2B1E1A"/>
+    ${[0,1].map(r=>[0,1,2,3].map(c=>{const x=30+c*38,y=68+r*30;return `<g>
+      <rect x="${x}" y="${y}" width="32" height="24" rx="5" fill="#FFFDF7"/>
+      <rect x="${x}" y="${y-3}" width="32" height="8" rx="3" fill="#C8553D"/>
+      <rect x="${x+11}" y="${y-3}" width="10" height="27" fill="#1D2B22"/></g>`}).join('')).join('')}
+  </svg>`
+};
+
+/* ---------- State ---------- */
+const S = {
+  step: 0,
+  pkg: null,
+  onsite: {flavors: [], extraDrinks: 0, extraHours: 0, bar: 'No thanks'},
+  holiday: {bundles: 1, partyPour: '', mix: {}, surprise: false, topping: ''},
+  combo:   {combos: 1, musubi: {}, mix: {}, surprise: false, topping: ''},
+  service: '', setting: '', contactVia: '', diet: [], quotes: [], budget: '', heard: ''
+};
+CONFIG.flavors.forEach(f => { S.holiday.mix[f.name] = 0; S.combo.mix[f.name] = 0; });
+CONFIG.musubi.forEach((m,i) => S.combo.musubi[m] = i === 0 ? 20 : 0);
+
+const STEPS = ['package', 'details', 'event', 'contact', 'review', 'done'];
+const LABELS = {package:'Package', details:'Details', event:'Event', contact:'Contact', review:'Review'};
+const $ = id => document.getElementById(id);
+const money = n => '$' + n.toLocaleString('en-US');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const inAppsScript = typeof google !== 'undefined' && google.script && google.script.run;
+
+/* ---------- Builders ---------- */
+function chips(el, options, {multi=false, get, set, max=0, dots=false}) {
+  el.innerHTML = '';
+  options.forEach(o => {
+    const label = typeof o === 'string' ? o : o.name;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip';
+    b.innerHTML = (dots && o.color ? `<span class="dot" style="background:${o.color}"></span>` : '') + esc(label);
+    b.onclick = () => {
+      if (multi) {
+        let cur = get().slice();
+        if (cur.includes(label)) cur = cur.filter(x => x !== label);
+        else { if (max && cur.length >= max) cur.shift(); cur.push(label); }
+        set(cur);
+      } else set(get() === label ? '' : label);
+      paint(); update();
+    };
+    b._label = label;
+    el.appendChild(b);
+  });
+  const paint = () => [...el.children].forEach(b => {
+    const v = get(); b.classList.toggle('on', multi ? v.includes(b._label) : v === b._label);
+  });
+  el._paint = paint; paint();
+}
+
+function stepper(el, label, sub, get, set, min=0, max=999, stepBy=1) {
+  const row = document.createElement('div'); row.className = 'stepper';
+  row.innerHTML = `<div class="lbl">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
+    <div class="ctrl"><button type="button" aria-label="Fewer">−</button><output></output><button type="button" aria-label="More">+</button></div>`;
+  const [minus, plus] = row.querySelectorAll('button'); const out = row.querySelector('output');
+  const paint = () => out.textContent = get();
+  minus.onclick = () => { set(Math.max(min, get() - stepBy)); paint(); update(); };
+  plus.onclick  = () => { set(Math.min(max, get() + stepBy)); paint(); update(); };
+  paint(); el.appendChild(row);
+  return paint;
+}
+
+function mixList(el, items, obj) {
+  el.innerHTML = '';
+  items.forEach(it => {
+    const name = typeof it === 'string' ? it : it.name;
+    stepper(el, name, '', () => obj[name], v => obj[name] = v);
+  });
+}
+
+/* ---------- Build UI ---------- */
+function build() {
+  // Package cards
+  const pk = $('pkgs');
+  Object.entries(CONFIG.packages).forEach(([key, p]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pkg'; b.dataset.key = key;
+    b.innerHTML = `<div class="art">${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}">` : ART[key]}</div>
+      <div><h3><span class="num">${p.n}</span>${esc(p.name)}</h3>
+      <div class="tag">${esc(p.tag)}</div><div class="price">${money(p.price)}</div><p>${esc(p.blurb)}</p></div>`;
+    b.onclick = () => selectPkg(key);
+    pk.appendChild(b);
+  });
+  const c = document.createElement('button'); c.type = 'button'; c.className = 'pkg custom'; c.dataset.key = 'custom';
+  c.innerHTML = `<h3>Not sure yet? Request a custom quote</h3><p>Tell us about your event and we'll recommend something.</p>`;
+  c.onclick = () => selectPkg('custom');
+  pk.appendChild(c);
+
+  // On-site
+  chips($('onsiteFlavors'), CONFIG.flavors, {multi:true, max:2, dots:true, get:()=>S.onsite.flavors, set:v=>S.onsite.flavors=v});
+  stepper($('onsiteAddons'), 'Extra drinks', `$${CONFIG.extraDrinkPrice} each`, ()=>S.onsite.extraDrinks, v=>S.onsite.extraDrinks=v, 0, 500, 5);
+  stepper($('onsiteAddons'), 'Extra hours', `$${CONFIG.extraHourPrice} per hour`, ()=>S.onsite.extraHours, v=>S.onsite.extraHours=v, 0, 6);
+  chips($('barChips'), ['Yes, tell me more', 'No thanks'], {get:()=>S.onsite.bar, set:v=>S.onsite.bar=v||'No thanks'});
+
+  // Holiday
+  stepper($('holidayBundles'), 'Number of bundles', `${money(CONFIG.packages.holiday.price)} each · 10 drinks + 1 Party Pour`, ()=>S.holiday.bundles, v=>S.holiday.bundles=v, 1, 50);
+  chips($('partyPour'), CONFIG.flavors, {dots:true, get:()=>S.holiday.partyPour, set:v=>S.holiday.partyPour=v});
+  mixList($('holidayMix'), CONFIG.flavors, S.holiday.mix);
+  $('holidaySurprise').onchange = e => { S.holiday.surprise = e.target.checked; $('holidayMix').style.display = e.target.checked ? 'none' : ''; update(); };
+  chips($('holidayTopping'), CONFIG.toppings, {get:()=>S.holiday.topping, set:v=>S.holiday.topping=v});
+
+  // Combo
+  stepper($('comboCount'), 'Number of combos', `${money(CONFIG.packages.combo.price)} each · 20 musubi + 20 drinks`, ()=>S.combo.combos, v=>S.combo.combos=v, 1, 50);
+  mixList($('musubiMix'), CONFIG.musubi, S.combo.musubi);
+  mixList($('comboMix'), CONFIG.flavors, S.combo.mix);
+  $('comboSurprise').onchange = e => { S.combo.surprise = e.target.checked; $('comboMix').style.display = e.target.checked ? 'none' : ''; update(); };
+  chips($('comboTopping'), CONFIG.toppings, {get:()=>S.combo.topping, set:v=>S.combo.topping=v});
+
+  // Event & contact chips
+  chips($('serviceChips'), ['Pickup at Teaspoon', 'Delivery (fee may apply)'], {get:()=>S.service, set:v=>S.service=v});
+  chips($('settingChips'), ['Indoor', 'Outdoor', 'Both / not sure'], {get:()=>S.setting, set:v=>S.setting=v});
+  chips($('contactChips'), ['Text', 'Phone call', 'Email'], {get:()=>S.contactVia, set:v=>S.contactVia=v});
+  chips($('dietChips'), ['Dairy-free milk', 'Nut allergy', 'Vegetarian', 'Less sugar'], {multi:true, get:()=>S.diet, set:v=>S.diet=v});
+  chips($('budgetChips'), ['Under $200', '$200–500', '$500–1,000', '$1,000+'], {get:()=>S.budget, set:v=>S.budget=v});
+  chips($('heardChips'), ['Instagram', 'Friend / referral', 'In the store', 'Flyer', 'Other'], {get:()=>S.heard, set:v=>S.heard=v});
+
+  // Date: no past dates
+  const t = new Date(); t.setMinutes(t.getMinutes() - t.getTimezoneOffset());
+  $('eventDate').min = t.toISOString().slice(0, 10);
+
+  $('phoneLink').textContent = CONFIG.phone;
+  $('phoneLink').href = 'sms:' + CONFIG.phone.replace(/\D/g, '');
+  $('previewFlag').hidden = !!(inAppsScript || CONFIG.apiUrl);
+
+  $('nextBtn').onclick = next;
+  $('backBtn').onclick = back;
+  document.querySelectorAll('input,select,textarea').forEach(el => el.addEventListener('input', () => el.classList.remove('bad')));
+}
+
+function selectPkg(key) {
+  S.pkg = key;
+  document.querySelectorAll('.pkg').forEach(b => b.classList.toggle('sel', b.dataset.key === key));
+  // Quote chips exclude the chosen package
+  const others = Object.entries(CONFIG.packages).filter(([k]) => k !== key).map(([,p]) => p.name);
+  S.quotes = S.quotes.filter(q => others.includes(q));
+  chips($('quoteChips'), key === 'custom' ? Object.values(CONFIG.packages).map(p=>p.name) : others, {multi:true, get:()=>S.quotes, set:v=>S.quotes=v});
+  hideErr(); update();
+}
+
+/* ---------- Totals & tallies ---------- */
+function mixTotal(obj) { return Object.values(obj).reduce((a, b) => a + b, 0); }
+
+function estimate() {
+  const P = CONFIG.packages;
+  switch (S.pkg) {
+    case 'onsite':  return P.onsite.price + S.onsite.extraDrinks * CONFIG.extraDrinkPrice + S.onsite.extraHours * CONFIG.extraHourPrice;
+    case 'holiday': return P.holiday.price * S.holiday.bundles;
+    case 'combo':   return P.combo.price * S.combo.combos;
+    default:        return null;
+  }
+}
+
+function tally(el, have, need) {
+  el.textContent = `${have} of ${need} chosen`;
+  el.classList.toggle('ok', have === need);
+}
+
+function update() {
+  const est = estimate();
+  $('estTotal').textContent = S.pkg === 'custom' ? 'Custom quote' : est == null ? '—' : money(est);
+  tally($('holidayTally'), mixTotal(S.holiday.mix), S.holiday.bundles * 10);
+  $('holidayTally').style.display = S.holiday.surprise ? 'none' : '';
+  tally($('musubiTally'), mixTotal(S.combo.musubi), S.combo.combos * 20);
+  tally($('comboTally'), mixTotal(S.combo.mix), S.combo.combos * 20);
+  $('comboTally').style.display = S.combo.surprise ? 'none' : '';
+  $('addrWrap').hidden = S.pkg !== 'onsite' && S.service === 'Pickup at Teaspoon';
+}
+
+/* ---------- Navigation ---------- */
+function flow() { return S.pkg === 'custom' ? STEPS.filter(s => s !== 'details') : STEPS; }
+
+function show() {
+  const f = flow(); const name = f[S.step];
+  document.querySelectorAll('.step').forEach(s => s.classList.toggle('active', s.dataset.step === name));
+  ['onsite','holiday','combo'].forEach(k => $('det-' + k).hidden = S.pkg !== k);
+
+  // On-site is served at the venue: no pickup/delivery question, label time accordingly
+  const onsite = S.pkg === 'onsite';
+  $('serviceWrap').hidden = onsite;
+  $('timeLabel').textContent = onsite ? 'Service start time' : 'Ready by';
+
+  const real = f.filter(s => s !== 'done');
+  $('progress').innerHTML = real.map((s, i) => `<span class="${i <= S.step ? 'on' : ''}"></span>`).join('');
+  $('stepLabel').textContent = name === 'done' ? '' : `Step ${S.step + 1} of ${real.length} · ${LABELS[name]}`;
+  $('progress').style.display = $('stepLabel').style.display = name === 'done' ? 'none' : '';
+  $('backBtn').style.visibility = S.step === 0 ? 'hidden' : 'visible';
+  $('nextBtn').textContent = name === 'review' ? 'Send request' : 'Next';
+  $('bar').style.display = name === 'done' ? 'none' : '';
+  if (name === 'review') renderReview();
+  hideErr(); update();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function err(msg, els=[]) {
+  $('err').textContent = msg; $('err').classList.add('show');
+  els.forEach(e => e.classList.add('bad'));
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  return false;
+}
+function hideErr() { $('err').classList.remove('show'); }
+
+function validate(name) {
+  if (name === 'package' && !S.pkg) return err('Please pick a package (or choose a custom quote).');
+  if (name === 'details') {
+    if (S.pkg === 'onsite' && S.onsite.flavors.length !== 2) return err('Please choose exactly 2 classic flavors.');
+    if (S.pkg === 'holiday') {
+      if (!S.holiday.partyPour) return err('Please pick your free Party Pour flavor.');
+      const need = S.holiday.bundles * 10;
+      if (!S.holiday.surprise && mixTotal(S.holiday.mix) !== need) return err(`Your drink mix should add up to ${need} — or tap "Surprise me".`);
+      if (!S.holiday.topping) return err('Please pick a topping.');
+    }
+    if (S.pkg === 'combo') {
+      const need = S.combo.combos * 20;
+      if (mixTotal(S.combo.musubi) !== need) return err(`Your musubi mix should add up to ${need}.`);
+      if (!S.combo.surprise && mixTotal(S.combo.mix) !== need) return err(`Your drink mix should add up to ${need} — or tap "Surprise me".`);
+      if (!S.combo.topping) return err('Please pick a topping.');
+    }
+  }
+  if (name === 'event') {
+    const bad = [];
+    if (!$('eventType').value) bad.push($('eventType'));
+    if (!$('eventDate').value) bad.push($('eventDate'));
+    if (!$('eventTime').value) bad.push($('eventTime'));
+    if (!(+$('guests').value > 0)) bad.push($('guests'));
+    const needsAddr = S.pkg === 'onsite' || S.service !== 'Pickup at Teaspoon';
+    if (needsAddr && !$('address').value.trim()) bad.push($('address'));
+    if (bad.length) return err('Please fill in the highlighted fields.', bad);
+    if (S.pkg !== 'onsite' && !S.service) return err('Please choose pickup or delivery.');
+  }
+  if (name === 'contact') {
+    const bad = [];
+    if (!$('name').value.trim()) bad.push($('name'));
+    if ($('phone').value.replace(/\D/g, '').length < 10) bad.push($('phone'));
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim())) bad.push($('email'));
+    if (bad.length) return err('Please check the highlighted fields.', bad);
+    if (!S.contactVia) return err('How should we reach you? Pick text, call or email.');
+  }
+  if (name === 'review' && !$('ack').checked) return err('Please check the box to confirm you understand this is a request.');
+  return true;
+}
+
+function next() {
+  const name = flow()[S.step];
+  if (!validate(name)) return;
+  if (name === 'review') return submit();
+  S.step++; show();
+}
+function back() { if (S.step > 0) { S.step--; show(); } }
+
+/* ---------- Summary / payload ---------- */
+function fmtMix(obj) { return Object.entries(obj).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${k}`).join(', '); }
+function fmtTime(v) {
+  if (!v) return ''; const [h, m] = v.split(':').map(Number);
+  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+}
+function fmtDate(v) {
+  if (!v) return ''; const [y, mo, d] = v.split('-').map(Number);
+  return new Date(y, mo - 1, d).toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+}
+
+function packageDetails() {
+  if (S.pkg === 'onsite') {
+    const o = S.onsite; const lines = [`Flavors: ${o.flavors.join(' & ')}`];
+    if (o.extraDrinks) lines.push(`Extra drinks: ${o.extraDrinks}`);
+    if (o.extraHours) lines.push(`Extra hours: ${o.extraHours}`);
+    lines.push(`21+ bar service: ${o.bar}`);
+    const n = $('setupNotes').value.trim(); if (n) lines.push(`Setup: ${n}`);
+    return lines.join('\n');
+  }
+  if (S.pkg === 'holiday') {
+    const h = S.holiday;
+    return [`Bundles: ${h.bundles}`, `Free Party Pour: ${h.partyPour}${h.bundles > 1 ? ' (×' + h.bundles + ')' : ''}`,
+            `Drinks: ${h.surprise ? 'Surprise mix' : fmtMix(h.mix)}`, `Topping: ${h.topping}`].join('\n');
+  }
+  if (S.pkg === 'combo') {
+    const c = S.combo;
+    return [`Combos: ${c.combos}`, `Musubi: ${fmtMix(c.musubi)}`,
+            `Drinks: ${c.surprise ? 'Surprise mix' : fmtMix(c.mix)}`, `Topping: ${c.topping}`].join('\n');
+  }
+  return 'Custom quote requested';
+}
+
+function payload() {
+  const pkgName = S.pkg === 'custom' ? 'Custom quote' : CONFIG.packages[S.pkg].name;
+  const est = estimate();
+  const service = S.pkg === 'onsite' ? 'On-site service' : S.service;
+  const pickup = service === 'Pickup at Teaspoon';
+  return {
+    'Package': pkgName,
+    'Package details': packageDetails(),
+    'Estimated total': est == null ? 'Quote' : money(est),
+    'Event date': fmtDate($('eventDate').value),
+    'Time': fmtTime($('eventTime').value),
+    'Guests': $('guests').value,
+    'Event type': $('eventType').value,
+    'Service': service,
+    'Venue': pickup ? '' : $('venue').value.trim(),
+    'Address': pickup ? '' : $('address').value.trim(),
+    'Indoor/outdoor': pickup ? '' : S.setting,
+    'Name': $('name').value.trim(),
+    'Phone': $('phone').value.trim(),
+    'Email': $('email').value.trim(),
+    'Contact via': S.contactVia,
+    'Company': $('company').value.trim(),
+    'Dietary needs': S.diet.join(', '),
+    'Also quote': S.quotes.join(', '),
+    'Budget': S.budget,
+    'Heard via': S.heard,
+    'Notes': $('notes').value.trim()
+  };
+}
+
+function renderReview() {
+  const p = payload();
+  $('summary').innerHTML = Object.entries(p)
+    .filter(([k, v]) => v && k !== 'Estimated total')
+    .map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('');
+  $('reviewTotal').textContent = S.pkg === 'custom' ? 'Custom quote' : p['Estimated total'];
+}
+
+/* ---------- Submit ---------- */
+function submit() {
+  const btn = $('nextBtn'); btn.disabled = true; btn.textContent = 'Sending…';
+  const data = payload();
+  const done = res => {
+    const first = data['Name'].split(' ')[0];
+    $('doneMsg').innerHTML = `Thanks, ${esc(first)}! ${esc(CONFIG.ownerName)} will reach out by ${esc(data['Contact via'].toLowerCase())} within 1–2 business days to confirm your order.` +
+      (res && res.id ? `<br><br>Your request number is <b>${esc(res.id)}</b>.` : '');
+    S.step = flow().indexOf('done'); show();
+  };
+  const fail = e => {
+    btn.disabled = false; btn.textContent = 'Send request';
+    err(`Sorry, something went wrong sending your request. Please try again or text ${CONFIG.phone}.`);
+    console.error(e);
+  };
+  if (inAppsScript) {
+    google.script.run.withSuccessHandler(done).withFailureHandler(fail).submitOrder(data);
+  } else if (CONFIG.apiUrl) {
+    // text/plain avoids a CORS preflight, which Apps Script can't answer
+    fetch(CONFIG.apiUrl, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(data)})
+      .then(r => r.json())
+      .then(res => res && res.ok ? done(res) : fail(res && res.error))
+      .catch(fail);
+  } else {
+    console.log('Preview submission:', data);
+    setTimeout(() => done({id: 'TS-PREVIEW'}), 700);
+  }
+}
+
+build(); show();
+</script>
+</body>
+</html>
