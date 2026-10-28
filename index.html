@@ -144,6 +144,7 @@
   .credit .hand img{width:27px;height:auto;display:block}
   .credit:hover{border-color:var(--gold);color:var(--ink)}
   .credit .arrow{color:var(--gold)}
+  .hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
   .travel-art{border-radius:12px;overflow:hidden;margin:0 0 12px;background:var(--gold-soft)}
   .travel-art img{width:100%;display:block}
 
@@ -156,7 +157,7 @@
 </style>
 </head>
 <body>
-<div class="preview-flag" id="previewFlag" hidden>Preview mode — requests aren't saved until this page is deployed in Google Apps Script.</div>
+<div class="preview-flag" id="previewFlag" hidden>Preview mode — requests aren't saved. They're saved once this page is live on Vercel.</div>
 
 <header>
   <svg class="flakes" viewBox="0 0 640 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -352,6 +353,7 @@
       <div class="chips" id="contactChips"></div>
       <label class="f" for="company">Company or organization <span class="opt">(optional)</span></label>
       <input type="text" id="company" autocomplete="organization">
+      <div class="hp" aria-hidden="true"><label for="website">Website</label><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
     </div>
     <div class="card">
       <label class="f">Dietary needs or allergies <span class="opt">(optional)</span></label>
@@ -420,9 +422,9 @@ const PHOTOS = {
    built-in illustration.
    ========================================================= */
 const CONFIG = {
-  // Paste your Apps Script Web app URL here when hosting on Vercel/Netlify (ends in /exec).
-  apiUrl: 'https://script.google.com/macros/s/AKfycbzSkwnpmYOHGyTQOKDJIlmi-VbFToS2oTg8Lp2bC8LM5pM9TGZ6UdPMH9e0MidCGFNDFQ/exec',
-  phone: '408-603-9600',
+  // Orders go to /api/submit on this site. The Google Apps Script URL and the contact
+  // phone number are kept on the server (Vercel + Apps Script), not in this file.
+  submitUrl: '/api/submit',
   ownerName: 'Samantha',
   location: 'Teaspoon El Dorado Hills',
   credit: {name: '17hands.ai', url: 'https://17hands.ai'},   // "Designed & built by" footer link
@@ -512,7 +514,8 @@ const LABELS = {package:'Package', details:'Details', event:'Event', contact:'Co
 const $ = id => document.getElementById(id);
 const money = n => '$' + n.toLocaleString('en-US');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const inAppsScript = typeof google !== 'undefined' && google.script && google.script.run;
+// Opened as a local file = preview (nothing is sent). On Vercel = live.
+const LIVE = /^https?:$/.test(location.protocol) && !/[?&]preview\b/.test(location.search);
 
 /* ---------- Builders ---------- */
 function chips(el, options, {multi=false, get, set, max=0, dots=false}) {
@@ -622,9 +625,7 @@ function build() {
   $('finePrint').textContent = CONFIG.finePrint;
   $('credit').href = CONFIG.credit.url;
   $('credit').innerHTML = `<span class="hand"><img src="${PHOTOS.logo17}" alt="17hands.ai logo"></span><span>Custom designed &amp; built by <b>${esc(CONFIG.credit.name)}</b></span><span class="arrow">↗</span>`;
-  $('phoneLink').textContent = CONFIG.phone;
-  $('phoneLink').href = 'sms:' + CONFIG.phone.replace(/\D/g, '');
-  $('previewFlag').hidden = !!(inAppsScript || CONFIG.apiUrl);
+  $('previewFlag').hidden = LIVE;
 
   $('nextBtn').onclick = next;
   $('backBtn').onclick = back;
@@ -865,18 +866,24 @@ function submit() {
     const first = data['Name'].split(' ')[0];
     $('doneMsg').innerHTML = `Thanks, ${esc(first)}! ${esc(CONFIG.ownerName)} will reach out by ${esc(data['Contact via'].toLowerCase())} within 1–2 business days to confirm your order.` +
       (res && res.id ? `<br><br>Your request number is <b>${esc(res.id)}</b>.` : '');
+    // The phone number comes from the server and only appears after an order is placed
+    const phone = res && res.phone ? String(res.phone) : '';
+    $('phoneLink').textContent = phone;
+    $('phoneLink').href = 'sms:' + phone.replace(/\D/g, '');
+    $('phoneLink').parentNode.hidden = !phone;
     S.step = flow().indexOf('done'); show();
   };
   const fail = e => {
     btn.disabled = false; btn.textContent = 'Send request';
-    err(`Sorry, something went wrong sending your request. Please try again or text ${CONFIG.phone}.`);
+    err('Sorry, something went wrong sending your request. Please try again in a moment.');
     console.error(e);
   };
-  if (inAppsScript) {
-    google.script.run.withSuccessHandler(done).withFailureHandler(fail).submitOrder(data);
-  } else if (CONFIG.apiUrl) {
-    // text/plain avoids a CORS preflight, which Apps Script can't answer
-    fetch(CONFIG.apiUrl, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(data)})
+  if (LIVE) {
+    fetch(CONFIG.submitUrl, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(Object.assign({}, data, {website: $('website').value}))
+    })
       .then(r => r.json())
       .then(res => res && res.ok ? done(res) : fail(res && res.error))
       .catch(fail);
