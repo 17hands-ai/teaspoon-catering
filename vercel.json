@@ -1,0 +1,17 @@
+{
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "teaspoon-catering.vercel.app" }],
+      "destination": "https://teaspoon-edh.com/catering",
+      "permanent": true
+    },
+    {
+      "source": "/:path((?!api/).*)",
+      "has": [{ "type": "host", "value": "teaspoon-catering.vercel.app" }],
+      "destination": "https://teaspoon-edh.com/:path",
+      "permanent": true
+    }
+  ]
+}
