@@ -145,6 +145,8 @@
   .credit .hand img{width:27px;height:auto;display:block}
   .credit:hover{border-color:var(--gold);color:var(--ink)}
   .credit .arrow{color:var(--gold)}
+  .ack a,.fine a{color:var(--red);font-weight:800}
+  .optin .ack + .ack{margin-top:14px}
   .hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
   .travel-art{border-radius:12px;overflow:hidden;margin:0 0 12px;background:var(--gold-soft)}
   .travel-art img{width:100%;display:block}
@@ -359,6 +361,7 @@
       <label class="f" for="company">Company or organization <span class="opt">(optional)</span></label>
       <input type="text" id="company" autocomplete="organization">
       <div class="hp" aria-hidden="true"><label for="website">Website</label><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
+      <p class="fine" style="text-align:left;margin-top:14px">We use your details to handle your request. See our <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
     </div>
     <div class="card">
       <label class="f">Dietary needs or allergies <span class="opt">(optional)</span></label>
@@ -381,9 +384,17 @@
     <div class="card"><table class="sum" id="summary"></table></div>
     <div class="total-box"><span>Estimated total</span><b id="reviewTotal"></b></div>
     <p class="fine" id="estNote" style="margin:-6px 0 16px"></p>
+    <div class="card optin">
+      <h4>Holiday specials &amp; offers <span class="opt">(optional)</span></h4>
+      <p class="note">Hear about seasonal drinks and deals first. Not required to order, and you can unsubscribe anytime.</p>
+      <label class="ack"><input type="checkbox" id="optEmail">
+        <span>Yes, <b>email</b> me Teaspoon El Dorado Hills specials and news.</span></label>
+      <label class="ack"><input type="checkbox" id="optText">
+        <span>Yes, <b>text</b> me specials at the mobile number I entered. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help.</span></label>
+    </div>
     <div class="card">
       <label class="ack"><input type="checkbox" id="ack">
-        <span>I understand this is a <b>request, not a confirmed booking</b>. Teaspoon will contact me to confirm availability, final price and payment.</span></label>
+        <span>I understand this is a <b>request, not a confirmed booking</b>. Teaspoon will contact me to confirm availability, final price and payment. I agree to the <a href="/terms" target="_blank" rel="noopener">Terms &amp; Conditions</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
     </div>
   </section>
 
@@ -398,6 +409,7 @@
   </section>
 
   <p class="fine" id="finePrint"></p>
+  <p class="fine"><a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms &amp; Conditions</a></p>
   <a class="credit" id="credit" target="_blank" rel="noopener"></a>
 </main>
 
@@ -762,7 +774,7 @@ function validate(name) {
     if (bad.length) return err('Please check the highlighted fields.', bad);
     if (!S.contactVia) return err('How should we reach you? Pick text, call or email.');
   }
-  if (name === 'review' && !$('ack').checked) return err('Please check the box to confirm you understand this is a request.');
+  if (name === 'review' && !$('ack').checked) return err('Please check the box to confirm you understand this is a request and agree to the terms.');
   return true;
 }
 
@@ -866,7 +878,11 @@ function renderReview() {
 /* ---------- Submit ---------- */
 function submit() {
   const btn = $('nextBtn'); btn.disabled = true; btn.textContent = 'Sending…';
-  const data = payload();
+  const data = Object.assign(payload(), {
+    'Email specials': $('optEmail').checked ? 'Yes' : 'No',
+    'Text specials': $('optText').checked ? 'Yes' : 'No',
+    'Agreed to terms': 'Yes (Terms & Privacy Policy effective Oct 29, 2026)'
+  });
   const done = res => {
     const first = data['Name'].split(' ')[0];
     $('doneMsg').innerHTML = `Thanks, ${esc(first)}! ${esc(CONFIG.ownerName)} will reach out by ${esc(data['Contact via'].toLowerCase())} within 1–2 business days to confirm your order.` +
