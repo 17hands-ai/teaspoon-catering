@@ -22,6 +22,8 @@ const SEND_CUSTOMER_CONFIRMATION = true;
 // paste the long ID from the sheet's address, between /d/ and /edit.
 const SPREADSHEET_ID = '';
 
+// Request numbers look like TS-MMDD-01, counting up each day in this time zone.
+const TIME_ZONE = 'America/Los_Angeles';
 const SHEET_NAME = 'Interest';
 const FIELDS = ['Package', 'Event date', 'Time of day', 'Email', 'Contact via', 'Phone',
   'Heard via', 'Notes', 'Email specials', 'Text specials', 'Agreed to terms'];
@@ -52,7 +54,7 @@ function doPost(e) {
     let id;
     try {
       const sh = sheet_();
-      id = 'TS-' + (1000 + sh.getLastRow());
+      id = nextId_();
       // A leading ' stops Sheets from treating text like "=..." as a formula.
       const row = [new Date(), id].concat(FIELDS.map(k => {
         const v = String(data[k] == null ? '' : data[k]);
@@ -69,6 +71,14 @@ function doPost(e) {
     console.error(err);
     return json_({ ok: false, error: 'Server error' });
   }
+}
+
+function nextId_() {
+  const props = PropertiesService.getScriptProperties();
+  const day = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyyMMdd');
+  const n = props.getProperty('SEQ_DAY') === day ? Number(props.getProperty('SEQ_N')) + 1 : 1;
+  props.setProperties({ SEQ_DAY: day, SEQ_N: String(n) });
+  return 'TS-' + day.slice(4) + '-' + String(n).padStart(2, '0');
 }
 
 function sheet_() {
