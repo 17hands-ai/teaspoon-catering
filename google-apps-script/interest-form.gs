@@ -102,7 +102,8 @@ function notify_(id, d) {
               "We'll get back to you within the next business day with additional details regarding your order.\n\n" +
               'Your request: ' + d.Package + ' · ' + d['Event date'] + ' · ' + d['Time of day'] + '\n' +
               'Request number: ' + id + '\n\n' +
-              'Teaspoon El Dorado Hills'
+              'Teaspoon El Dorado Hills\n' +
+              '4420 Town Center Blvd, Ste 110, El Dorado Hills, CA 95762'
       });
     }
   } catch (err) {
