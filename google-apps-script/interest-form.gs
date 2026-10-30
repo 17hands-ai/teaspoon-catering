@@ -18,6 +18,9 @@
 const NOTIFY_EMAIL = 'you@example.com';
 // Send the customer a "we got your request" email? true or false.
 const SEND_CUSTOMER_CONFIRMATION = true;
+// Only needed if this script was NOT opened from the sheet (Extensions → Apps Script):
+// paste the long ID from the sheet's address, between /d/ and /edit.
+const SPREADSHEET_ID = '';
 
 const SHEET_NAME = 'Interest';
 const FIELDS = ['Package', 'Event date', 'Time of day', 'Email', 'Contact via', 'Phone',
@@ -69,7 +72,7 @@ function doPost(e) {
 }
 
 function sheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = spreadsheet_();
   let sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) sh = ss.insertSheet(SHEET_NAME);
   if (sh.getLastRow() === 0) {
@@ -89,7 +92,7 @@ function notify_(id, d) {
         replyTo: d.Email,
         subject: 'New catering request ' + id + ': ' + d.Package + ' on ' + d['Event date'],
         body: 'A new catering request came in from teaspoon-edh.com/catering.\n\n' + lines +
-              '\n\nOpen the sheet: ' + SpreadsheetApp.getActiveSpreadsheet().getUrl()
+              '\n\nOpen the sheet: ' + spreadsheet_().getUrl()
       });
     }
     if (SEND_CUSTOMER_CONFIRMATION && d.Email) {
@@ -110,6 +113,12 @@ function notify_(id, d) {
     // The row is already saved; a mail problem shouldn't fail the request.
     console.error('Email failed: ' + err);
   }
+}
+
+function spreadsheet_() {
+  const ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) throw new Error('No spreadsheet found. Open this script from the sheet (Extensions → Apps Script), or fill in SPREADSHEET_ID.');
+  return ss;
 }
 
 function json_(o) {
