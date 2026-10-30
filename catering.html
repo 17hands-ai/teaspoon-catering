@@ -72,7 +72,7 @@
   label.f,.f{display:block;font-weight:700;font-size:14px;margin:16px 0 6px}
   .card > .f:first-child{margin-top:0}
   .opt{font-weight:400;color:var(--muted)}
-  input[type=email],input[type=tel],input[type=date],textarea{
+  input[type=text],input[type=email],input[type=tel],input[type=date],textarea{
      width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#FFFCF8;color:var(--ink);outline:none;transition:border .2s}
   input:focus,textarea:focus{border-color:var(--gold);background:#fff}
   textarea{min-height:90px;resize:vertical}
@@ -107,7 +107,9 @@
   .done .badge{width:84px;height:84px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-size:40px;margin:0 auto 16px;box-shadow:0 0 0 8px var(--gold-soft)}
   .done h2{font-size:30px}
   .done .hint{font-size:16px;line-height:1.55}
-  .home{display:inline-block;margin-top:10px;color:var(--red);font-weight:800;text-decoration:none}
+  .reqid{display:inline-block;background:var(--gold-soft);border-radius:999px;padding:8px 18px;font-size:15px;margin:0 0 14px}
+  .reqid b{color:var(--red);letter-spacing:.04em}
+  .home{display:block;width:max-content;margin:10px auto 0;color:var(--red);font-weight:800;text-decoration:none}
   .fine{font-size:12px;color:var(--muted);text-align:center;margin:10px 0 0;line-height:1.5}
   .preview-flag{background:var(--green);color:#fff;text-align:center;font-size:12.5px;font-weight:700;padding:6px 10px}
 
@@ -174,6 +176,8 @@
     <h2>Where should we reach you?</h2>
     <p class="hint">We'll send your confirmation and next steps by email.</p>
     <div class="card">
+      <label class="f" for="firstName">First name</label>
+      <input type="text" id="firstName" autocomplete="given-name" placeholder="So we know who to ask for">
       <label class="f" for="email">Email</label>
       <input type="email" id="email" autocomplete="email" placeholder="you@example.com">
       <span class="f">Prefer a text or call instead?</span>
@@ -211,6 +215,7 @@
       <div class="badge">✓</div>
       <h2>Thank you!</h2>
       <p class="hint">Thank you for submitting your interest. You'll hear back within the next business day with additional details regarding your order.</p>
+      <p class="reqid" id="reqId" hidden>Your request ID: <b></b></p>
       <a class="home" href="/">← Back to home</a>
     </div>
   </section>
@@ -352,6 +357,7 @@ function valid() {
     if (!S.time) return err('Please choose morning, afternoon or evening.');
   }
   if (S.step === 3) {
+    if (!$('firstName').value.trim()) return err('Please enter your first name.', [$('firstName')]);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim())) return err('Please enter a valid email address.', [$('email')]);
     if (S.contactVia && $('phone').value.replace(/\D/g, '').length < 10)
       return err('Please enter your mobile number so we can text or call you.', [$('phone')]);
@@ -367,6 +373,7 @@ function next() {
 
 function payload() {
   return {
+    'First name': $('firstName').value.trim(),
     'Package': S.pkg,
     'Event date': fmtDate($('eventDate').value),
     'Time of day': S.time,
@@ -384,20 +391,25 @@ function payload() {
 function submit() {
   const btn = $('nextBtn'); btn.disabled = true; btn.textContent = 'Sending…';
   const data = payload();
-  const done = () => { S.step = 'done'; show(); };
+  const done = res => {
+    const id = res && res.id ? String(res.id) : '';
+    $('reqId').querySelector('b').textContent = id;
+    $('reqId').hidden = !id;
+    S.step = 'done'; show();
+  };
   const fail = e => {
     btn.disabled = false; btn.textContent = 'Send';
     err('Sorry, something went wrong sending your request. Please try again in a moment.');
     console.error(e);
   };
-  if (!LIVE) { console.log('Preview submission:', data); return setTimeout(done, 600); }
+  if (!LIVE) { console.log('Preview submission:', data); return setTimeout(() => done({id: 'TS-PREVIEW'}), 600); }
   fetch(CONFIG.submitUrl, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(Object.assign({}, data, {website: $('website').value}))
   })
     .then(r => r.json())
-    .then(res => res && res.ok ? done() : fail(res && res.error))
+    .then(res => res && res.ok ? done(res) : fail(res && res.error))
     .catch(fail);
 }
 

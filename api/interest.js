@@ -12,9 +12,9 @@
  * Then redeploy.
  */
 
-const FIELDS = ['Package', 'Event date', 'Time of day', 'Email', 'Contact via', 'Phone',
+const FIELDS = ['First name', 'Package', 'Event date', 'Time of day', 'Email', 'Contact via', 'Phone',
   'Heard via', 'Notes', 'Email specials', 'Text specials', 'Agreed to terms'];
-const REQUIRED = ['Package', 'Event date', 'Time of day', 'Email'];
+const REQUIRED = ['First name', 'Package', 'Event date', 'Time of day', 'Email'];
 const MAX_LEN = 2000;
 
 module.exports = async (req, res) => {

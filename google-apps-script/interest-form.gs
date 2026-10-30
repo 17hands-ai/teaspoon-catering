@@ -22,10 +22,12 @@ const SEND_CUSTOMER_CONFIRMATION = true;
 // paste the long ID from the sheet's address, between /d/ and /edit.
 const SPREADSHEET_ID = '';
 
+// Request numbers look like TS-MMDD-01, counting up each day in this time zone.
+const TIME_ZONE = 'America/Los_Angeles';
 const SHEET_NAME = 'Interest';
-const FIELDS = ['Package', 'Event date', 'Time of day', 'Email', 'Contact via', 'Phone',
+const FIELDS = ['First name', 'Package', 'Event date', 'Time of day', 'Email', 'Contact via', 'Phone',
   'Heard via', 'Notes', 'Email specials', 'Text specials', 'Agreed to terms'];
-const HEADERS = ['Received', 'Request #'].concat(FIELDS, ['Status']);
+const HEADERS = ['Received', 'Request ID'].concat(FIELDS, ['Status']);
 
 function setup() {
   const props = PropertiesService.getScriptProperties();
@@ -52,13 +54,16 @@ function doPost(e) {
     let id;
     try {
       const sh = sheet_();
-      id = 'TS-' + (1000 + sh.getLastRow());
-      // A leading ' stops Sheets from treating text like "=..." as a formula.
-      const row = [new Date(), id].concat(FIELDS.map(k => {
+      id = nextId_();
+      const values = { 'Received': new Date(), 'Request ID': id, 'Status': 'New' };
+      FIELDS.forEach(k => {
         const v = String(data[k] == null ? '' : data[k]);
-        return /^[=+\-@]/.test(v) ? "'" + v : v;
-      }), ['New']);
-      sh.appendRow(row);
+        // A leading ' stops Sheets from treating text like "=..." as a formula.
+        values[k] = /^[=+\-@]/.test(v) ? "'" + v : v;
+      });
+      // Values go under their column names, so columns can be moved or added in the sheet.
+      const head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+      sh.appendRow(head.map(h => h in values ? values[h] : ''));
     } finally {
       lock.releaseLock();
     }
@@ -71,6 +76,14 @@ function doPost(e) {
   }
 }
 
+function nextId_() {
+  const props = PropertiesService.getScriptProperties();
+  const day = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyyMMdd');
+  const n = props.getProperty('SEQ_DAY') === day ? Number(props.getProperty('SEQ_N')) + 1 : 1;
+  props.setProperties({ SEQ_DAY: day, SEQ_N: String(n) });
+  return 'TS-' + day.slice(4) + '-' + String(n).padStart(2, '0');
+}
+
 function sheet_() {
   const ss = spreadsheet_();
   let sh = ss.getSheetByName(SHEET_NAME);
@@ -79,6 +92,14 @@ function sheet_() {
     sh.appendRow(HEADERS);
     sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
     sh.setFrozenRows(1);
+  } else {
+    // Older sheets: rename "Request #" and add any new columns at the end.
+    const cols = sh.getLastColumn();
+    const head = sh.getRange(1, 1, 1, cols).getValues()[0].map(String);
+    const old = head.indexOf('Request #');
+    if (old >= 0) { sh.getRange(1, old + 1).setValue('Request ID'); head[old] = 'Request ID'; }
+    const missing = HEADERS.filter(h => head.indexOf(h) < 0);
+    if (missing.length) sh.getRange(1, cols + 1, 1, missing.length).setValues([missing]).setFontWeight('bold');
   }
   return sh;
 }
@@ -90,7 +111,7 @@ function notify_(id, d) {
       MailApp.sendEmail({
         to: NOTIFY_EMAIL,
         replyTo: d.Email,
-        subject: 'New catering request ' + id + ': ' + d.Package + ' on ' + d['Event date'],
+        subject: 'New catering request ' + id + ' from ' + d['First name'] + ': ' + d.Package + ' on ' + d['Event date'],
         body: 'A new catering request came in from teaspoon-edh.com/catering.\n\n' + lines +
               '\n\nOpen the sheet: ' + spreadsheet_().getUrl()
       });
@@ -100,11 +121,11 @@ function notify_(id, d) {
         to: d.Email,
         subject: 'We got your Teaspoon catering request (' + id + ')',
         name: 'Teaspoon El Dorado Hills',
-        body: 'Hi there,\n\n' +
+        body: 'Hi ' + (d['First name'] || 'there') + ',\n\n' +
               'Thank you for your interest in Teaspoon El Dorado Hills catering! ' +
               "We'll get back to you within the next business day with additional details regarding your order.\n\n" +
               'Your request: ' + d.Package + ' · ' + d['Event date'] + ' · ' + d['Time of day'] + '\n' +
-              'Request number: ' + id + '\n\n' +
+              'Request ID: ' + id + '\n\n' +
               'Teaspoon El Dorado Hills\n' +
               '4420 Town Center Blvd, Ste 110, El Dorado Hills, CA 95762'
       });
